@@ -1,0 +1,128 @@
+services:
+
+  flink-submit:
+    build:
+      context: .
+      dockerfile: docker/flink-submit/Dockerfile
+    container_name: sentinelflow-flink-submit
+    networks:
+      - sentinelflow-net
+    mem_limit: 256m
+    volumes:
+      - ./sentinelflow-flink-jobs/processor/target/sentinelflow-flink-processor-0.1.0-SNAPSHOT.jar:/jobs/sentinelflow-processor.jar
+      - ./sentinelflow-flink-jobs/detector/target/sentinelflow-flink-detector-0.1.0-SNAPSHOT.jar:/jobs/sentinelflow-detector.jar
+    environment:
+      FLINK_JOBMANAGER_URL: flink-jobmanager
+      FLINK_PORT: "8081"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://flink-jobmanager:8081/jobs/overview"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  gateway:
+    build:
+      context: .
+      dockerfile: sentinelflow-gateway/Dockerfile
+    container_name: sentinelflow-gateway
+    networks:
+      - sentinelflow-net
+    ports:
+      - "8080:8080"
+    mem_limit: 256m
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xmx192m"
+      INGESTION_URL: http://ingestion:8081
+      STORAGE_URL: http://storage:8086
+      DASHBOARD_URL: http://dashboard:8085
+
+  ingestion:
+    build:
+      context: .
+      dockerfile: sentinelflow-ingestion/Dockerfile
+    container_name: sentinelflow-ingestion
+    networks:
+      - sentinelflow-net
+    ports:
+      - "8082:8081"
+    mem_limit: 256m
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xmx192m"
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9094
+
+  llm-analyzer:
+    build:
+      context: .
+      dockerfile: sentinelflow-llm-analyzer/Dockerfile
+    container_name: sentinelflow-llm-analyzer
+    networks:
+      - sentinelflow-net
+    ports:
+      - "8084:8084"
+    mem_limit: 512m
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xmx384m"
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9094
+      OLLAMA_URL: http://ollama:11434
+      OLLAMA_MODEL: qwen3:1.7b
+      LLM_LANGUAGE: ru
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: sentinelflow-dashboard/Dockerfile
+    container_name: sentinelflow-dashboard
+    networks:
+      - sentinelflow-net
+    ports:
+      - "8085:8085"
+    mem_limit: 512m
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xmx384m"
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9094
+      DB_HOST: postgres
+      STORAGE_QUERY_URL: http://storage:8086
+
+  storage:
+    build:
+      context: .
+      dockerfile: sentinelflow-storage/Dockerfile
+    container_name: sentinelflow-storage
+    networks:
+      - sentinelflow-net
+    ports:
+      - "8086:8086"
+    mem_limit: 384m
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xmx288m"
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9094
+      DB_HOST: postgres
+
+  simulator:
+    build:
+      context: .
+      dockerfile: sentinelflow-simulator/Dockerfile
+    container_name: sentinelflow-simulator
+    networks:
+      - sentinelflow-net
+    mem_limit: 128m
+    volumes:
+      - ./sentinelflow-simulator/sample-data:/app/sample-data
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xmx96m"
+      SIMULATOR_INGESTION_URL: http://ingestion:8081/api/v1/ingest
+      TERMO_DATA_PATH: /app/sample-data/termo_data.csv
+      FUEL_DATA_PATH: /app/sample-data/fuel_sensor_data.csv
+      SIMULATOR_DELAY_MS: "100"
+      SIMULATOR_AUTO_START: "true"
+      SIMULATOR_ANOMALY_ENABLED: "true"
+      SIMULATOR_ANOMALY_CYCLES: "3"
+      SIMULATOR_ANOMALY_CONTINUOUS: "true"
+    depends_on:
+      ingestion:
+        condition: service_started
+
+networks:
+  sentinelflow-net:
+    external: true
