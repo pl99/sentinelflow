@@ -1,0 +1,60 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: sentinelflow-gateway
+
+  cloud:
+    gateway:
+      default-filters:
+        - name: CircuitBreaker
+          args:
+            name: defaultCircuitBreaker
+            fallbackUri: forward:/fallback
+        - name: Retry
+          args:
+            retries: 3
+            statuses: BAD_GATEWAY, SERVICE_UNAVAILABLE, GATEWAY_TIMEOUT
+            methods: GET, PATCH
+
+      routes:
+        - id: ingestion-exact
+          uri: ${INGESTION_URL:http://localhost:8081}
+          predicates:
+            - Path=/ingest
+          filters:
+            - RewritePath=/ingest, /api/v1/ingest
+            - name: IngestionRateLimiter
+
+        - id: ingestion-sub
+          uri: ${INGESTION_URL:http://localhost:8081}
+          predicates:
+            - Path=/ingest/**
+          filters:
+            - RewritePath=/ingest/(?<segment>.*), /api/v1/ingest/$\{segment}
+            - name: IngestionRateLimiter
+
+        - id: storage-query
+          uri: ${STORAGE_URL:http://localhost:8086}
+          predicates:
+            - Path=/query/**
+          filters:
+            - RewritePath=/query/(?<segment>.*), /api/v1/query/$\{segment}
+
+        - id: dashboard
+          uri: ${DASHBOARD_URL:http://localhost:8085}
+          predicates:
+            - Path=/dashboard/**
+          filters:
+            - RewritePath=/dashboard/(?<segment>.*), /api/v1/$\{segment}
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
