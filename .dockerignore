@@ -1,0 +1,5 @@
+**/.git/
+**/.mvn/
+**/node_modules/
+**/*.md
+**/*.log
