@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SentinelFlow Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+               background: #0f172a; color: #e2e8f0; padding: 2rem; }
+        h1 { color: #38bdf8; margin-bottom: 1rem; }
+        .row { display: flex; gap: 1rem; margin-bottom: 2rem; }
+        .col { flex: 1; }
+        .summary { display: flex; gap: 1rem; margin-bottom: 2rem; }
+        .card { background: #1e293b; padding: 1.5rem; border-radius: 8px; flex: 1; }
+        .card h3 { color: #94a3b8; font-size: 0.875rem; margin-bottom: 0.5rem; }
+        .card .value { font-size: 2rem; font-weight: bold; }
+        .card .value.warning { color: #fbbf24; }
+        .card .value.critical { color: #ef4444; }
+        .card .value.ok { color: #22c55e; }
+        .card .value.info { color: #38bdf8; }
+        .panel { background: #1e293b; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; }
+        .panel h2 { color: #e2e8f0; font-size: 1rem; margin-bottom: 1rem; }
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 0.75rem 0.5rem; color: #94a3b8; font-size: 0.75rem;
+             text-transform: uppercase; border-bottom: 1px solid #334155; }
+        td { padding: 0.75rem 0.5rem; border-bottom: 1px solid #1e293b; }
+        .severity-WARNING { color: #fbbf24; }
+        .severity-CRITICAL { color: #ef4444; }
+        .status-OPEN { color: #ef4444; font-weight: 600; }
+        .status-ACK { color: #fbbf24; }
+        .status-RESOLVED { color: #22c55e; }
+        .badge { display: inline-block; padding: 0.125rem 0.5rem; border-radius: 999px;
+                 font-size: 0.75rem; font-weight: 600; }
+        .badge.OPEN { background: #ef444420; color: #ef4444; }
+        .badge.ACK { background: #fbbf2420; color: #fbbf24; }
+        .badge.RESOLVED { background: #22c55e20; color: #22c55e; }
+        button { padding: 0.25rem 0.75rem; border: 1px solid #475569; border-radius: 4px;
+                 background: transparent; color: #e2e8f0; cursor: pointer; font-size: 0.75rem; }
+        button:hover { background: #334155; }
+        .bar { height: 8px; border-radius: 4px; margin-top: 4px; }
+        .bar-bg { background: #334155; border-radius: 4px; overflow: hidden; }
+        .bar-fill { height: 8px; border-radius: 4px; transition: width 0.5s; }
+        .bar-critical { background: #ef4444; }
+        .bar-warning { background: #fbbf24; }
+        .bar-ok { background: #22c55e; }
+        .bar-info { background: #38bdf8; }
+        .source-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+        .source-row .label { min-width: 100px; color: #94a3b8; font-size: 0.875rem; }
+        .source-row .count { min-width: 40px; text-align: right; font-weight: 600; }
+        .tabs { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+        .tabs button { font-size: 0.75rem; padding: 0.25rem 0.75rem; }
+        .tabs button.active { background: #334155; border-color: #38bdf8; }
+        .title-link { color: #38bdf8; cursor: pointer; text-decoration: none; }
+        .title-link:hover { text-decoration: underline; color: #7dd3fc; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+                         z-index: 100; align-items: center; justify-content: center; }
+        .modal-overlay.open { display: flex; }
+        .modal { background: #1e293b; border-radius: 12px; padding: 2rem; max-width: 640px;
+                 width: 90%; max-height: 80vh; overflow-y: auto; position: relative; }
+        .modal h2 { color: #e2e8f0; font-size: 1.25rem; margin-bottom: 1.5rem; word-break: break-word; }
+        .modal .close { position: absolute; top: 1rem; right: 1rem; background: none; border: none;
+                        color: #94a3b8; font-size: 1.5rem; cursor: pointer; }
+        .modal .close:hover { color: #e2e8f0; }
+        .modal .field { margin-bottom: 1.25rem; }
+        .modal .field-label { color: #94a3b8; font-size: 0.75rem; text-transform: uppercase;
+                              letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+        .modal .field-value { color: #e2e8f0; font-size: 0.9rem; line-height: 1.6;
+                              white-space: pre-wrap; word-break: break-word; }
+        .modal .meta { display: flex; gap: 1.5rem; margin-bottom: 1.5rem; font-size: 0.8rem; }
+        .modal .meta span { color: #94a3b8; }
+        .modal .meta strong { color: #e2e8f0; }
+    </style>
+</head>
+<body>
+    <h1>SentinelFlow</h1>
+
+    <div class="summary" id="summary">
+        <div class="card"><h3>Open</h3><div class="value warning" id="openCount">-</div></div>
+        <div class="card"><h3>Critical</h3><div class="value critical" id="criticalCount">-</div></div>
+        <div class="card"><h3>Total Alerts</h3><div class="value info" id="totalCount">-</div></div>
+        <div class="card"><h3>Last Hour</h3><div class="value info" id="lastHourCount">-</div></div>
+        <div class="card"><h3>Acknowledged</h3><div class="value ok" id="ackCount">-</div></div>
+        <div class="card"><h3>Resolved</h3><div class="value ok" id="resolvedCount">-</div></div>
+    </div>
+
+    <div class="row">
+        <div class="col">
+            <div class="panel">
+                <h2>Sources</h2>
+                <div id="sourceStats"></div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="panel">
+                <h2>Severity</h2>
+                <div id="severityStats"></div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="panel">
+                <h2>Status</h2>
+                <div id="statusStats"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>Alerts by Hour <span id="filterLabel" style="font-weight:normal;font-size:0.8rem;color:#38bdf8"></span></h2>
+        <div id="hourlyChart" style="cursor:pointer"></div>
+    </div>
+
+    <div class="panel">
+        <h2>Alerts <span id="timeLabel" style="font-size:0.8rem;color:#94a3b8;font-weight:normal"></span></h2>
+        <table id="alerts-table">
+            <thead><tr><th>Time</th><th>Severity</th><th>Source</th><th>Title</th><th>Status</th><th></th></tr></thead>
+            <tbody id="alertsBody"></tbody>
+        </table>
+    </div>
+
+    <div class="modal-overlay" id="detailModal" onclick="if(event.target===this)closeDetails()">
+        <div class="modal">
+            <button class="close" onclick="closeDetails()">&times;</button>
+            <h2 id="modalTitle"></h2>
+            <div class="meta">
+                <span>Severity: <strong id="modalSeverity"></strong></span>
+                <span>Source: <strong id="modalSource"></strong></span>
+                <span>Status: <strong id="modalStatus"></strong></span>
+                <span>Time: <strong id="modalTime"></strong></span>
+            </div>
+            <div class="field">
+                <div class="field-label">LLM Interpretation</div>
+                <div class="field-value" id="modalDescription"></div>
+            </div>
+            <div class="field">
+                <div class="field-label">Recommendation</div>
+                <div class="field-value" id="modalRecommendation"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let timeMode = '1h';
+        let selectedHour = '';
+
+        async function loadAlerts() {
+            let url = '/api/v1/alerts?limit=50';
+            if (timeMode === '1h') {
+                const ago = new Date(Date.now() - 3600000).toISOString();
+                url = '/api/v1/alerts?since=' + encodeURIComponent(ago) + '&limit=50';
+                document.getElementById('timeLabel').textContent = '(last hour)';
+            } else if (timeMode === 'hour' && selectedHour) {
+                const s = new Date(selectedHour);
+                const u = new Date(s.getTime() + 3600000);
+                url = '/api/v1/alerts?since=' + encodeURIComponent(s.toISOString())
+                    + '&until=' + encodeURIComponent(u.toISOString()) + '&limit=200';
+                const h = s.getHours();
+                document.getElementById('timeLabel').textContent = '(' + h + ':00 – ' + (h+1) + ':00)';
+            }
+            const res = await fetch(url);
+            const alerts = await res.json();
+            const tbody = document.getElementById('alertsBody');
+            tbody.innerHTML = alerts.map(a => {
+                const statusClass = a.status;
+                const sevClass = 'severity-' + a.severity;
+                const titleEsc = a.title.replace(/'/g, "\\'");
+                const descEsc = (a.description || '').replace(/'/g, "\\'");
+                const recEsc = (a.recommendation || '').replace(/'/g, "\\'");
+                return `<tr>
+                    <td>${new Date(a.detectedAt).toLocaleTimeString()}</td>
+                    <td class="${sevClass}">${a.severity}</td>
+                    <td>${a.source}</td>
+                    <td><span class="title-link" onclick="showDetails('${titleEsc}','${a.severity}','${a.source}','${a.status}','${a.detectedAt}','${descEsc}','${recEsc}')">${a.title}</span></td>
+                    <td><span class="badge ${statusClass}">${a.status}</span></td>
+                    <td>${a.status === 'OPEN' ? `<button onclick="ack('${a.id}')">Ack</button>` : ''}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        async function loadSummary() {
+            const res = await fetch('/api/v1/dashboard/summary');
+            const data = await res.json();
+            document.getElementById('openCount').textContent = data.alerts.openCount;
+            document.getElementById('ackCount').textContent = data.alerts.acknowledgedCount;
+            document.getElementById('resolvedCount').textContent = data.alerts.resolvedCount || 0;
+            const critical = data.alerts.openBySeverity?.find(s => s.severity === 'CRITICAL');
+            document.getElementById('criticalCount').textContent = critical ? critical.count : 0;
+        }
+
+        function filterByHour(hourIso) {
+            if (selectedHour === hourIso) {
+                timeMode = '1h';
+                selectedHour = '';
+            } else {
+                timeMode = 'hour';
+                selectedHour = hourIso;
+            }
+            loadAlerts();
+            loadStats();
+        }
+
+        async function loadStats() {
+            const res = await fetch('/api/v1/dashboard/stats');
+            const s = await res.json();
+            document.getElementById('totalCount').textContent = s.total;
+            document.getElementById('lastHourCount').textContent = s.lastHour;
+
+            const maxSource = Math.max(...s.bySource.map(x => x.count), 1);
+            document.getElementById('sourceStats').innerHTML = s.bySource.map(x =>
+                `<div class="source-row">
+                    <span class="label">${x.source}</span>
+                    <div class="bar-bg" style="flex:1"><div class="bar-fill bar-info" style="width:${(x.count/maxSource*100).toFixed(0)}%"></div></div>
+                    <span class="count">${x.count}</span>
+                </div>`
+            ).join('') || '<span style="color:#64748b">No data</span>';
+
+            const maxSev = Math.max(...s.bySeverity.map(x => x.count), 1);
+            document.getElementById('severityStats').innerHTML = s.bySeverity.map(x => {
+                const cls = x.severity === 'CRITICAL' ? 'bar-critical' : 'bar-warning';
+                return `<div class="source-row">
+                    <span class="label">${x.severity}</span>
+                    <div class="bar-bg" style="flex:1"><div class="bar-fill ${cls}" style="width:${(x.count/maxSev*100).toFixed(0)}%"></div></div>
+                    <span class="count">${x.count}</span>
+                </div>`;
+            }).join('');
+
+            const maxStat = Math.max(...s.byStatus.map(x => x.count), 1);
+            document.getElementById('statusStats').innerHTML = s.byStatus.map(x => {
+                const cls = x.status === 'OPEN' ? 'bar-critical' : x.status === 'ACK' ? 'bar-warning' : 'bar-ok';
+                return `<div class="source-row">
+                    <span class="label">${x.status}</span>
+                    <div class="bar-bg" style="flex:1"><div class="bar-fill ${cls}" style="width:${(x.count/maxStat*100).toFixed(0)}%"></div></div>
+                    <span class="count">${x.count}</span>
+                </div>`;
+            }).join('');
+
+            if (s.hourly.length > 0) {
+                const maxH = Math.max(...s.hourly.map(x => x.count), 1);
+                document.getElementById('hourlyChart').innerHTML =
+                    '<div style="display:flex;align-items:end;gap:2px;height:80px">' +
+                    s.hourly.map(x => {
+                        const h = Math.round(x.count / maxH * 72);
+                        const hourIso = x.hour;
+                        const label = x.hour ? new Date(x.hour).getHours() + ':00' : '';
+                        const active = timeMode === 'hour' && selectedHour === hourIso;
+                        return `<div onclick="filterByHour('${hourIso}')" style="flex:1;display:flex;flex-direction:column;align-items:center;cursor:pointer" title="${label}: ${x.count}">
+                            <div class="bar-fill ${active ? 'bar-critical' : 'bar-info'}" style="height:${h}px;width:100%;opacity:${active ? 1 : 0.7}"></div>
+                            <span style="font-size:0.65rem;color:#64748b;margin-top:2px">${label}</span>
+                        </div>`;
+                    }).join('') + '</div>';
+                const filterActive = s.hourly.some(x => timeMode === 'hour' && selectedHour === x.hour);
+                document.getElementById('filterLabel').textContent = filterActive ? '(click bar again to show all)' : '(click a bar to filter)';
+            } else {
+                document.getElementById('hourlyChart').innerHTML = '<span style="color:#64748b">No data</span>';
+                document.getElementById('filterLabel').textContent = '';
+            }
+        }
+
+        function showDetails(title, severity, source, status, detectedAt, description, recommendation) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalSeverity').textContent = severity;
+            document.getElementById('modalSource').textContent = source;
+            document.getElementById('modalStatus').textContent = status;
+            document.getElementById('modalTime').textContent = new Date(detectedAt).toLocaleString();
+            document.getElementById('modalDescription').textContent = description || 'No interpretation available';
+            document.getElementById('modalRecommendation').textContent = recommendation || 'No recommendations';
+            document.getElementById('detailModal').classList.add('open');
+        }
+
+        function closeDetails() {
+            document.getElementById('detailModal').classList.remove('open');
+        }
+
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetails(); });
+
+        async function ack(id) {
+            await fetch(`/api/v1/alerts/${id}/status?status=ACK`, { method: 'PATCH' });
+            loadAlerts(); loadSummary(); loadStats();
+        }
+
+        let ws = new WebSocket((location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + location.host + '/ws/alerts');
+        ws.onmessage = () => { loadAlerts(); loadSummary(); loadStats(); };
+        ws.onclose = () => setTimeout(() => ws = new WebSocket('ws://' + location.host + '/ws/alerts'), 3000);
+
+        loadAlerts(); loadSummary(); loadStats();
+        setInterval(loadAlerts, 10000);
+        setInterval(loadSummary, 10000);
+        setInterval(loadStats, 30000);
+    </script>
+</body>
+</html>
