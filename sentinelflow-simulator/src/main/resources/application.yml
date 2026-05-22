@@ -1,0 +1,20 @@
+simulator:
+  ingestion:
+    url: ${SIMULATOR_INGESTION_URL:http://localhost:8081/api/v1/ingest}
+  data:
+    termo-file: ${TERMO_DATA_PATH:}
+    fuel-file: ${FUEL_DATA_PATH:}
+  delay-ms: ${SIMULATOR_DELAY_MS:100}
+  auto-start: ${SIMULATOR_AUTO_START:false}
+  anomaly:
+    enabled: ${SIMULATOR_ANOMALY_ENABLED:false}
+    cycles: ${SIMULATOR_ANOMALY_CYCLES:0}
+    continuous: ${SIMULATOR_ANOMALY_CONTINUOUS:false}
+
+spring:
+  main:
+    web-application-type: none
+
+logging:
+  level:
+    com.sentinelflow.simulator: INFO
