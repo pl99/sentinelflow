@@ -25,6 +25,7 @@
         <maven.compiler.target>21</maven.compiler.target>
         <spring-cloud.version>2025.0.0</spring-cloud.version>
         <flink.version>1.18.1</flink.version>
+        <spring-ai.version>1.1.7</spring-ai.version>
     </properties>
 
     <modules>
@@ -51,6 +52,13 @@
                 <groupId>com.sentinelflow</groupId>
                 <artifactId>sentinelflow-common</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>${spring-ai.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

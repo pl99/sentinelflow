@@ -33,11 +33,11 @@ public final class PromptTemplates {
                 DESCRIPTION: %s
                 DETAILS: %s
 
-                Provide a concise analysis in the following format:
-                1. INTERPRETATION: What does this anomaly mean in plain language? (in %s)
-                2. CLASSIFICATION: (LatencyIssue / ErrorSpike / ThroughputDegradation / ResourceExhaustion / Unknown) (in English)
-                3. PROBABLE_CAUSES: List 2-3 likely root causes (in %s)
-                4. RECOMMENDATIONS: List 1-2 immediate actions to investigate (in %s)
+                Respond with a JSON object containing these fields:
+                - "interpretation": what this anomaly means in plain language (in %s)
+                - "classification": one of LatencyIssue, ErrorSpike, ThroughputDegradation, ResourceExhaustion, Unknown (in English)
+                - "probableCauses": array of 2-3 likely root causes (in %s)
+                - "recommendations": array of 1-2 immediate actions to investigate (in %s)
                 """
                 .formatted(language, service, metric, severity, score, description, details,
                         language, language, language);
@@ -51,10 +51,10 @@ public final class PromptTemplates {
                 LEVEL: %s
                 MESSAGE: %s
 
-                Provide:
-                1. What is the likely impact on the system? (in %s)
-                2. Should this be escalated? (YES/NO) (in English)
-                3. What component should be checked first? (in %s)
+                Respond with a JSON object containing these fields:
+                - "impact": what is the likely impact on the system (in %s)
+                - "escalate": YES or NO (in English)
+                - "componentToCheck": what component should be checked first (in %s)
                 """
                 .formatted(language, source, level, message, language, language);
     }
