@@ -2,8 +2,17 @@ server:
   port: 8084
 
 spring:
+  main:
+    web-application-type: servlet
   application:
     name: sentinelflow-llm-analyzer
+
+  ai:
+    ollama:
+      base-url: ${OLLAMA_URL:http://localhost:11434}
+      chat:
+        options:
+          model: ${OLLAMA_MODEL:qwen3:1.7b}
 
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
@@ -25,7 +34,3 @@ logging:
 sentinelflow:
   llm:
     language: ${LLM_LANGUAGE:ru}
-    ollama:
-      url: ${OLLAMA_URL:http://localhost:11434}
-      model: ${OLLAMA_MODEL:qwen3:1.7b}
-      timeout: 300s
