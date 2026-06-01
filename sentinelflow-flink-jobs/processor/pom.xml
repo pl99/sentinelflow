@@ -24,12 +24,12 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-connector-kafka</artifactId>
+            <groupId>com.sentinelflow</groupId>
+            <artifactId>sentinelflow-common</artifactId>
         </dependency>
         <dependency>
             <groupId>com.sentinelflow</groupId>
-            <artifactId>sentinelflow-common</artifactId>
+            <artifactId>sentinelflow-flink-serialization</artifactId>
         </dependency>
 
         <dependency>

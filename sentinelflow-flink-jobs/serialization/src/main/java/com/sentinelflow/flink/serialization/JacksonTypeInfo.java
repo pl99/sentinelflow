@@ -1,4 +1,4 @@
-package com.sentinelflow.flink.processor.serialization;
+package com.sentinelflow.flink.serialization;
 
 import org.apache.flink.api.common.serialization.SerializerConfig;
 import org.apache.flink.api.common.typeinfo.TypeInformation;

@@ -66,14 +66,14 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-connector-kafka</artifactId>
-      <version>4.0.0-2.0</version>
+      <groupId>com.sentinelflow</groupId>
+      <artifactId>sentinelflow-common</artifactId>
+      <version>0.1.0-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.sentinelflow</groupId>
-      <artifactId>sentinelflow-common</artifactId>
+      <artifactId>sentinelflow-flink-serialization</artifactId>
       <version>0.1.0-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
