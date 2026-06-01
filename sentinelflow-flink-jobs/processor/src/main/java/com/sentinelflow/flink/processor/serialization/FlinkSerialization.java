@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.flink.api.common.serialization.SerializationSchema;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 
 import java.io.IOException;
 
@@ -19,15 +21,29 @@ public final class FlinkSerialization {
         return new JacksonKafkaDeserializer<>(clazz);
     }
 
-    @SuppressWarnings("unchecked")
-    public static <T> SerializationSchema<T> serializer() {
-        return (SerializationSchema<T>) (SerializationSchema<Object>)
-                element -> {
-                    try {
-                        return MAPPER.writeValueAsBytes(element);
-                    } catch (IOException e) {
-                        throw new RuntimeException("Serialization failed for " + element, e);
-                    }
-                };
+    public static <T> SerializationSchema<T> serializer(Class<T> typeClass) {
+        return new JacksonSerializationSchema<>(typeClass);
+    }
+
+    private static class JacksonSerializationSchema<T> implements SerializationSchema<T>, ResultTypeQueryable<T> {
+        private final Class<T> typeClass;
+
+        JacksonSerializationSchema(Class<T> typeClass) {
+            this.typeClass = typeClass;
+        }
+
+        @Override
+        public byte[] serialize(T element) {
+            try {
+                return MAPPER.writeValueAsBytes(element);
+            } catch (IOException e) {
+                throw new RuntimeException("Serialization failed for " + element, e);
+            }
+        }
+
+        @Override
+        public TypeInformation<T> getProducedType() {
+            return TypeInformation.of(typeClass);
+        }
     }
 }

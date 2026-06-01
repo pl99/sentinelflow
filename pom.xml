@@ -24,7 +24,7 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <spring-cloud.version>2025.0.0</spring-cloud.version>
-        <flink.version>1.18.1</flink.version>
+        <flink.version>2.0.2</flink.version>
         <spring-ai.version>1.1.7</spring-ai.version>
     </properties>
 

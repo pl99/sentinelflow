@@ -1,6 +1,6 @@
 package com.sentinelflow.flink.detector.serialization;
 
-import org.apache.flink.api.common.ExecutionConfig;
+import org.apache.flink.api.common.serialization.SerializerConfig;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeutils.TypeSerializer;
 
@@ -31,7 +31,7 @@ public class JacksonTypeInfo<T> extends TypeInformation<T> {
     public boolean isKeyType() { return false; }
 
     @Override
-    public TypeSerializer<T> createSerializer(ExecutionConfig config) {
+    public TypeSerializer<T> createSerializer(SerializerConfig config) {
         return new JacksonTypeSerializer<>(typeClass);
     }
 
