@@ -13,8 +13,6 @@ import org.apache.flink.connector.kafka.sink.KafkaSink;
 import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.windowing.time.Time;
-
 import java.time.Duration;
 
 public class ProcessorJob {
@@ -43,14 +41,14 @@ public class ProcessorJob {
         DataStream<EnrichedTelemetryEvent> enriched = input
                 .filter(e -> e.correlationId() != null && !e.correlationId().isBlank())
                 .keyBy(TelemetryEvent::correlationId)
-                .window(org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows.of(Time.minutes(1)))
+                .window(org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows.of(Duration.ofMinutes(1)))
                 .process(new CorrelationWindowFunction())
                 .returns(new JacksonTypeInfo<>(EnrichedTelemetryEvent.class))
                 .name("correlation-window");
 
         var recordSerializer = KafkaRecordSerializationSchema.<EnrichedTelemetryEvent>builder()
                 .setTopic(KafkaTopics.ENRICHED_EVENTS)
-                .setValueSerializationSchema(FlinkSerialization.<EnrichedTelemetryEvent>serializer())
+                .setValueSerializationSchema(FlinkSerialization.serializer(EnrichedTelemetryEvent.class))
                 .build();
 
         KafkaSink<EnrichedTelemetryEvent> sink = KafkaSink.<EnrichedTelemetryEvent>builder()

@@ -14,7 +14,6 @@ import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.windowing.time.Time;
 import java.time.Duration;
 
 public class DetectorJob {
@@ -45,7 +44,7 @@ public class DetectorJob {
         DataStream<AnomalyEvent> statisticalAnomalies = enrichedInput
                 .filter(e -> "metric".equals(e.original().type()))
                 .keyBy(e -> e.original().source() + ":" + subMetricName(e.original()))
-                .window(org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows.of(Time.minutes(1)))
+                .window(org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows.of(Duration.ofMinutes(1)))
                 .process(new StatisticalDetector())
                 .returns(new JacksonTypeInfo<>(AnomalyEvent.class))
                 .name("statistical-detection");
@@ -72,7 +71,7 @@ public class DetectorJob {
 
         var recordSerializer = KafkaRecordSerializationSchema.<AnomalyEvent>builder()
                 .setTopic(KafkaTopics.ANOMALY_EVENTS)
-                .setValueSerializationSchema(FlinkSerialization.<AnomalyEvent>serializer())
+                .setValueSerializationSchema(FlinkSerialization.serializer(AnomalyEvent.class))
                 .build();
 
         KafkaSink<AnomalyEvent> sink = KafkaSink.<AnomalyEvent>builder()

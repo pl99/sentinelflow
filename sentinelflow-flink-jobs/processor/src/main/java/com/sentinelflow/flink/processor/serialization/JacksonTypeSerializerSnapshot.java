@@ -40,15 +40,18 @@ public class JacksonTypeSerializerSnapshot<T> implements TypeSerializerSnapshot<
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public TypeSerializer<T> restoreSerializer() {
         return new JacksonTypeSerializer<>(type);
     }
 
     @Override
-    public TypeSerializerSchemaCompatibility<T> resolveSchemaCompatibility(TypeSerializer<T> newSerializer) {
-        if (newSerializer instanceof JacksonTypeSerializer) {
-            return TypeSerializerSchemaCompatibility.compatibleAsIs();
+    public TypeSerializerSchemaCompatibility<T> resolveSchemaCompatibility(TypeSerializerSnapshot<T> newSnapshot) {
+        if (newSnapshot instanceof JacksonTypeSerializerSnapshot) {
+            JacksonTypeSerializerSnapshot<T> other = (JacksonTypeSerializerSnapshot<T>) newSnapshot;
+            if (type != null && type.equals(other.type)) {
+                return TypeSerializerSchemaCompatibility.compatibleAsIs();
+            }
+            return TypeSerializerSchemaCompatibility.incompatible();
         }
         return TypeSerializerSchemaCompatibility.incompatible();
     }
