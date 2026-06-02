@@ -110,24 +110,40 @@ public class TimeSeriesQueryService {
     }
 
     public SummaryResponse summary() {
-        Long totalEvents = em.createQuery(
-                "SELECT COUNT(e) FROM TelemetryEventEntity e", Long.class).getSingleResult();
-        Long totalMetrics = em.createQuery(
-                "SELECT COUNT(m) FROM MetricPoint m", Long.class).getSingleResult();
+        long totalEvents = approximateCount("telemetry_events");
+        long totalMetrics = approximateCount("metric_points");
 
         Instant oneHourAgo = Instant.now().minusSeconds(3600);
-        Long eventsLastHour = em.createQuery(
-                        "SELECT COUNT(e) FROM TelemetryEventEntity e WHERE e.timestamp >= :since", Long.class)
-                .setParameter("since", oneHourAgo)
-                .getSingleResult();
-        Long metricsLastHour = em.createQuery(
-                        "SELECT COUNT(m) FROM MetricPoint m WHERE m.time >= :since", Long.class)
-                .setParameter("since", oneHourAgo)
-                .getSingleResult();
+        long eventsLastHour = exactCountSince(
+                "SELECT COUNT(e) FROM TelemetryEventEntity e WHERE e.timestamp >= :since", oneHourAgo);
+        long metricsLastHour = exactCountSince(
+                "SELECT COUNT(m) FROM MetricPoint m WHERE m.time >= :since", oneHourAgo);
 
         return new SummaryResponse(
                 totalEvents, totalMetrics,
                 eventsLastHour, metricsLastHour);
+    }
+
+    private long approximateCount(String tableName) {
+        try {
+            Number result = (Number) em.createNativeQuery(
+                            "SELECT reltuples::bigint FROM pg_class WHERE relname = :table")
+                    .setParameter("table", tableName)
+                    .getSingleResult();
+            return result != null ? result.longValue() : 0L;
+        } catch (Exception e) {
+            return 0L;
+        }
+    }
+
+    private long exactCountSince(String jpql, Instant since) {
+        try {
+            return em.createQuery(jpql, Long.class)
+                    .setParameter("since", since)
+                    .getSingleResult();
+        } catch (Exception e) {
+            return 0L;
+        }
     }
 
     private static Instant toInstant(Object v) {
