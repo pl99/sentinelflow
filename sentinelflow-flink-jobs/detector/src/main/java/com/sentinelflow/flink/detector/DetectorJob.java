@@ -1,7 +1,7 @@
 package com.sentinelflow.flink.detector;
 
-import com.sentinelflow.flink.detector.serialization.FlinkSerialization;
-import com.sentinelflow.flink.detector.serialization.JacksonTypeInfo;
+import com.sentinelflow.flink.serialization.FlinkSerialization;
+import com.sentinelflow.flink.serialization.JacksonTypeInfo;
 import com.sentinelflow.common.config.KafkaTopics;
 import com.sentinelflow.common.event.AnomalyEvent;
 import com.sentinelflow.common.event.EnrichedTelemetryEvent;

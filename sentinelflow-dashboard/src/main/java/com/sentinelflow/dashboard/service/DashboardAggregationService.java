@@ -31,7 +31,7 @@ public class DashboardAggregationService {
         try {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(storageQueryUrl + "/api/v1/query/summary"))
-                    .timeout(Duration.ofSeconds(5))
+                    .timeout(Duration.ofSeconds(15))
                     .GET()
                     .build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());

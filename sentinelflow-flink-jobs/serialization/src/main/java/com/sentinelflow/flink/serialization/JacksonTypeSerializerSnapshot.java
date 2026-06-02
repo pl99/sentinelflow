@@ -1,4 +1,4 @@
-package com.sentinelflow.flink.detector.serialization;
+package com.sentinelflow.flink.serialization;
 
 import org.apache.flink.api.common.typeutils.TypeSerializer;
 import org.apache.flink.api.common.typeutils.TypeSerializerSchemaCompatibility;

@@ -1,4 +1,4 @@
-package com.sentinelflow.flink.processor.serialization;
+package com.sentinelflow.flink.serialization;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;

@@ -21,12 +21,18 @@
     </properties>
 
     <modules>
+        <module>serialization</module>
         <module>processor</module>
         <module>detector</module>
     </modules>
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>com.sentinelflow</groupId>
+                <artifactId>sentinelflow-flink-serialization</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <dependency>
                 <groupId>org.apache.flink</groupId>
                 <artifactId>flink-streaming-java</artifactId>
