@@ -25,29 +25,35 @@ spring:
             - Path=/ingest
           filters:
             - RewritePath=/ingest, /api/v1/ingest
-            - name: IngestionRateLimiter
+            - name: InMemoryRateLimiter
+              args:
+                replenishRate: 100
+                burstCapacity: 100
 
         - id: ingestion-sub
           uri: ${INGESTION_URL:http://localhost:8081}
           predicates:
             - Path=/ingest/**
           filters:
-            - RewritePath=/ingest/(?<segment>.*), /api/v1/ingest/$\{segment}
-            - name: IngestionRateLimiter
+            - RewritePath=/ingest/(?<segment>.*), /api/v1/ingest/$\\{segment}
+            - name: InMemoryRateLimiter
+              args:
+                replenishRate: 100
+                burstCapacity: 100
 
         - id: storage-query
           uri: ${STORAGE_URL:http://localhost:8086}
           predicates:
             - Path=/query/**
           filters:
-            - RewritePath=/query/(?<segment>.*), /api/v1/query/$\{segment}
+            - RewritePath=/query/(?<segment>.*), /api/v1/query/$\\{segment}
 
         - id: dashboard
           uri: ${DASHBOARD_URL:http://localhost:8085}
           predicates:
             - Path=/dashboard/**
           filters:
-            - RewritePath=/dashboard/(?<segment>.*), /api/v1/$\{segment}
+            - RewritePath=/dashboard/(?<segment>.*), /api/v1/$\\{segment}
 
 resilience4j:
   circuitbreaker:

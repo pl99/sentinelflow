@@ -7,6 +7,7 @@ public final class KafkaTopics {
     public static final String ANOMALY_EVENTS = "anomaly-events";
     public static final String LLM_INSIGHTS = "llm-insights";
     public static final String ALERTS = "alerts";
+    public static final String ALERTS_BROADCAST = "alerts-broadcast";
 
     private KafkaTopics() {}
 }

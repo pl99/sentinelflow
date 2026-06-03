@@ -33,5 +33,9 @@ spring:
     enabled: false
 
 sentinelflow:
+  kafka:
+    broadcast:
+      group-id: ${spring.application.name}-broadcast-${random.uuid}
+
   storage:
     query-url: ${STORAGE_QUERY_URL:http://localhost:8086}

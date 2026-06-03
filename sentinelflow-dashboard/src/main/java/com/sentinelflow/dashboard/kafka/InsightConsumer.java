@@ -1,6 +1,7 @@
 package com.sentinelflow.dashboard.kafka;
 
 import com.sentinelflow.common.config.KafkaTopics;
+import com.sentinelflow.common.event.BroadcastAlertEvent;
 import com.sentinelflow.common.event.LlmInsight;
 import com.sentinelflow.dashboard.entity.Alert;
 import com.sentinelflow.dashboard.service.AlertManagementService;
@@ -8,6 +9,7 @@ import com.sentinelflow.dashboard.websocket.AlertWebSocketHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
 
@@ -20,11 +22,14 @@ public class InsightConsumer {
 
     private final AlertManagementService alertService;
     private final AlertWebSocketHandler webSocketHandler;
+    private final KafkaTemplate<String, BroadcastAlertEvent> broadcastKafkaTemplate;
 
     public InsightConsumer(AlertManagementService alertService,
-                           AlertWebSocketHandler webSocketHandler) {
+                           AlertWebSocketHandler webSocketHandler,
+                           KafkaTemplate<String, BroadcastAlertEvent> broadcastKafkaTemplate) {
         this.alertService = alertService;
         this.webSocketHandler = webSocketHandler;
+        this.broadcastKafkaTemplate = broadcastKafkaTemplate;
     }
 
     @KafkaListener(
@@ -56,6 +61,14 @@ public class InsightConsumer {
                     "source", alert.getSource(),
                     "detectedAt", alert.getDetectedAt().toString()
             ));
+
+            broadcastKafkaTemplate.send(KafkaTopics.ALERTS_BROADCAST,
+                    new BroadcastAlertEvent(
+                            alert.getId(),
+                            alert.getSeverity(),
+                            alert.getSource(),
+                            alert.getDetectedAt()
+                    ));
 
             ack.acknowledge();
         } catch (Exception e) {
