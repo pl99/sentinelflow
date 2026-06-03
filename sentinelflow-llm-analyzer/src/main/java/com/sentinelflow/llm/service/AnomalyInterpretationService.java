@@ -64,10 +64,15 @@ public class AnomalyInterpretationService {
 
             AnomalyAnalysis analysis = objectMapper.readValue(rawJson, AnomalyAnalysis.class);
 
+            String llmSeverity = analysis.severity();
+            String severity = anomaly.severity();
+            if (llmSeverity != null && !llmSeverity.isBlank()) {
+                severity = maxSeverity(llmSeverity, severity);
+            }
             return new LlmInsight(
                     UUID.randomUUID().toString(),
                     anomaly.id(),
-                    anomaly.severity(),
+                    severity,
                     anomaly.score(),
                     analysis.interpretation() != null ? analysis.interpretation() : "LLM analysis unavailable",
                     analysis.classification() != null ? analysis.classification().trim() : "Unknown",
@@ -97,5 +102,17 @@ public class AnomalyInterpretationService {
                 Instant.now(),
                 Map.of("service", anomaly.service(), "metric", anomaly.metric())
         );
+    }
+
+    private static final List<String> SEVERITY_ORDER = List.of("INFO", "WARNING", "ERROR", "CRITICAL");
+
+    private String maxSeverity(String a, String b) {
+        if (a == null || a.isBlank()) return b;
+        if (b == null || b.isBlank()) return a;
+        int ia = SEVERITY_ORDER.indexOf(a.toUpperCase());
+        int ib = SEVERITY_ORDER.indexOf(b.toUpperCase());
+        if (ia < 0) return b;
+        if (ib < 0) return a;
+        return ia >= ib ? a : b;
     }
 }

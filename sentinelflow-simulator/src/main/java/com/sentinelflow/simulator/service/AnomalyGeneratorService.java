@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class AnomalyGeneratorService {
@@ -29,15 +30,16 @@ public class AnomalyGeneratorService {
     public int generate(int cycleCount) {
         int total = 0;
         for (int cycle = 0; cycle < cycleCount; cycle++) {
+            String correlationId = UUID.randomUUID().toString();
             for (String source : SOURCES) {
                 for (String metric : METRICS) {
-                    total += sendMetricBatch(source, metric);
+                    total += sendMetricBatch(source, metric, correlationId);
                     sleep(delayMs);
                 }
             }
-            total += sendErrorLog();
+            total += sendErrorLog(correlationId);
             sleep(delayMs);
-            total += sendHighLatencyTrace();
+            total += sendHighLatencyTrace(correlationId);
             sleep(delayMs);
             if ((cycle + 1) % 5 == 0) {
                 log.info("Anomaly cycle {}/{} complete, total sent: {}", cycle + 1, cycleCount, total);
@@ -52,15 +54,16 @@ public class AnomalyGeneratorService {
         long cycle = 0;
         while (!Thread.currentThread().isInterrupted()) {
             try {
+                String correlationId = UUID.randomUUID().toString();
                 for (String source : SOURCES) {
                     for (String metric : METRICS) {
-                        sendMetricBatch(source, metric);
+                        sendMetricBatch(source, metric, correlationId);
                         sleep(delayMs);
                     }
                 }
-                sendErrorLog();
+                sendErrorLog(correlationId);
                 sleep(delayMs);
-                sendHighLatencyTrace();
+                sendHighLatencyTrace(correlationId);
                 sleep(delayMs);
                 cycle++;
                 if (cycle % 10 == 0) {
@@ -73,21 +76,21 @@ public class AnomalyGeneratorService {
         }
     }
 
-    private int sendMetricBatch(String source, String metric) {
+    private int sendMetricBatch(String source, String metric, String correlationId) {
         int sent = 0;
         int batchSize = 8 + RNG.nextInt(5);
         double anomalyValue = 500 + RNG.nextDouble() * 1000;
         for (int i = 0; i < batchSize; i++) {
             double normalValue = 50 + RNG.nextDouble() * 50;
-            Map<String, Object> event = buildMetricEvent(source, metric, normalValue);
+            Map<String, Object> event = buildMetricEvent(source, metric, normalValue, correlationId);
             if (client.sendEvent(event)) sent++;
         }
-        Map<String, Object> anomaly = buildMetricEvent(source, metric, anomalyValue);
+        Map<String, Object> anomaly = buildMetricEvent(source, metric, anomalyValue, correlationId);
         if (client.sendEvent(anomaly)) sent++;
         return sent;
     }
 
-    private int sendErrorLog() {
+    private int sendErrorLog(String correlationId) {
         String[] messages = {
             "Connection timeout to database",
             "Null pointer in data processing pipeline",
@@ -101,12 +104,13 @@ public class AnomalyGeneratorService {
         event.put("type", "log");
         event.put("subtype", "error");
         event.put("payload", Map.of("level", "ERROR", "message", msg));
+        event.put("correlationId", correlationId);
         event.put("tags", Map.of("service", "anomaly-gen"));
         event.put("timestamp", Instant.now().toString());
         return client.sendEvent(event) ? 1 : 0;
     }
 
-    private int sendHighLatencyTrace() {
+    private int sendHighLatencyTrace(String correlationId) {
         long duration = 1000 + RNG.nextLong(4000);
         String[] operations = {"/api/data/query", "/api/process/batch", "/api/storage/write", "/api/analyze"};
         String op = operations[RNG.nextInt(operations.length)];
@@ -120,12 +124,13 @@ public class AnomalyGeneratorService {
         event.put("type", "trace");
         event.put("subtype", op.replace("/", "_"));
         event.put("payload", payload);
+        event.put("correlationId", correlationId);
         event.put("tags", Map.of("service", "anomaly-gen"));
         event.put("timestamp", Instant.now().toString());
         return client.sendEvent(event) ? 1 : 0;
     }
 
-    private Map<String, Object> buildMetricEvent(String source, String metric, double value) {
+    private Map<String, Object> buildMetricEvent(String source, String metric, double value, String correlationId) {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("metric", metric);
         payload.put("value", value);
@@ -134,6 +139,7 @@ public class AnomalyGeneratorService {
         event.put("type", "metric");
         event.put("subtype", metric + "_reading");
         event.put("payload", payload);
+        event.put("correlationId", correlationId);
         event.put("tags", Map.of("unit", metric.equals("temperature") ? "celsius" : "raw"));
         event.put("timestamp", Instant.now().toString());
         return event;

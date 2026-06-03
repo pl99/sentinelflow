@@ -36,11 +36,12 @@ public final class PromptTemplates {
                 Respond with a JSON object containing these fields:
                 - "interpretation": what this anomaly means in plain language (in %s)
                 - "classification": one of LatencyIssue, ErrorSpike, ThroughputDegradation, ResourceExhaustion, Unknown (in English)
+                - "severity": one of CRITICAL, ERROR, WARNING, INFO — re-evaluate the severity based on the anomaly data
                 - "probableCauses": array of 2-3 likely root causes (in %s)
                 - "recommendations": array of 1-2 immediate actions to investigate (in %s)
                 """
                 .formatted(language, service, metric, severity, score, description, details,
-                        language, language, language);
+                        language, language, language, language);
     }
 
     public static String logInterpretation(String language, String source, String level, String message) {
