@@ -1,0 +1,1 @@
+ALTER TABLE alerts ADD CONSTRAINT IF NOT EXISTS uq_alerts_anomaly_id UNIQUE (anomaly_id);

@@ -30,7 +30,8 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
   flyway:
-    enabled: false
+    enabled: true
+    locations: classpath:db/migration
 
 sentinelflow:
   kafka:
