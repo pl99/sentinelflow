@@ -1,9 +1,6 @@
 simulator:
   ingestion:
     url: ${SIMULATOR_INGESTION_URL:http://localhost:8081/api/v1/ingest}
-  data:
-    termo-file: ${TERMO_DATA_PATH:}
-    fuel-file: ${FUEL_DATA_PATH:}
   delay-ms: ${SIMULATOR_DELAY_MS:100}
   auto-start: ${SIMULATOR_AUTO_START:false}
   anomaly:

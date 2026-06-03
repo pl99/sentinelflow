@@ -24,7 +24,8 @@ public class TopicInitializer {
                 topic(KafkaTopics.ENRICHED_EVENTS, 3),
                 topic(KafkaTopics.ANOMALY_EVENTS, 2),
                 topic(KafkaTopics.LLM_INSIGHTS, 2),
-                topic(KafkaTopics.ALERTS, 1)
+                topic(KafkaTopics.ALERTS, 1),
+                topic(KafkaTopics.ALERTS_BROADCAST, 1)
         );
     }
 

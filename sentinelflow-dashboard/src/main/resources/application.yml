@@ -30,8 +30,13 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
   flyway:
-    enabled: false
+    enabled: true
+    locations: classpath:db/migration
 
 sentinelflow:
+  kafka:
+    broadcast:
+      group-id: ${spring.application.name}-broadcast-${random.uuid}
+
   storage:
     query-url: ${STORAGE_QUERY_URL:http://localhost:8086}

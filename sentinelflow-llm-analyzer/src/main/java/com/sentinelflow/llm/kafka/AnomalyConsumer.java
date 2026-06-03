@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
@@ -30,13 +31,14 @@ public class AnomalyConsumer {
 
     @KafkaListener(
             topics = KafkaTopics.ANOMALY_EVENTS,
-            groupId = "${spring.kafka.consumer.group-id}"
+            groupId = "${spring.kafka.consumer.group-id}",
+            containerFactory = "kafkaListenerContainerFactory"
     )
-    public void consume(AnomalyEvent anomaly) {
-        executor.submit(() -> process(anomaly));
+    public void consume(AnomalyEvent anomaly, Acknowledgment ack) {
+        executor.submit(() -> process(anomaly, ack));
     }
 
-    private void process(AnomalyEvent anomaly) {
+    private void process(AnomalyEvent anomaly, Acknowledgment ack) {
         log.info("Processing anomaly: {} / {} (score={})", anomaly.service(), anomaly.metric(), anomaly.score());
 
         LlmInsight insight = interpretationService.analyze(anomaly);
@@ -46,6 +48,7 @@ public class AnomalyConsumer {
                     if (ex != null) {
                         log.error("Failed to send insight for anomaly {}: {}", anomaly.id(), ex.getMessage());
                     } else {
+                        ack.acknowledge();
                         log.info("Published insight for anomaly {}", anomaly.id());
                     }
                 });

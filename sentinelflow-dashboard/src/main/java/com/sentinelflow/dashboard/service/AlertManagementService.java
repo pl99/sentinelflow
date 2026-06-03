@@ -30,6 +30,17 @@ public class AlertManagementService {
     @Transactional
     public Alert createAlert(String title, String severity, String source,
                              String description, String recommendation, String anomalyId) {
+
+        // Idempotent upsert — if an alert for this anomaly already exists,
+        // return it instead of creating a duplicate (Kafka at-least-once delivery).
+        if (anomalyId != null && !anomalyId.isBlank()) {
+            var existing = alertRepository.findByAnomalyId(anomalyId);
+            if (existing.isPresent()) {
+                log.debug("Alert already exists for anomaly {}, returning existing", anomalyId);
+                return existing.get();
+            }
+        }
+
         String id = UUID.randomUUID().toString();
         var alert = new Alert(id, title, severity, "OPEN", source,
                 description, recommendation, anomalyId, Instant.now(), null);

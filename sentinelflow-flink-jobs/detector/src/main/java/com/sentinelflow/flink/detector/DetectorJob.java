@@ -14,6 +14,7 @@ import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
 import java.time.Duration;
 
 public class DetectorJob {
@@ -66,8 +67,17 @@ public class DetectorJob {
                 .returns(new JacksonTypeInfo<>(AnomalyEvent.class))
                 .name("rule-engine");
 
-        // --- union both streams ---
-        DataStream<AnomalyEvent> anomalies = statisticalAnomalies.union(ruleAnomalies);
+        // --- raw-events source for RawMetricDetector (metrics without correlation enrichment) ---
+        DataStream<AnomalyEvent> rawMetricAnomalies = rawInput
+                .filter(e -> "metric".equals(e.type()))
+                .keyBy(e -> e.source() + ":" + subMetricName(e))
+                .window(TumblingProcessingTimeWindows.of(Duration.ofMinutes(1)))
+                .process(new RawMetricDetector())
+                .returns(new JacksonTypeInfo<>(AnomalyEvent.class))
+                .name("raw-metric-detection");
+
+        // --- union all three streams ---
+        DataStream<AnomalyEvent> anomalies = statisticalAnomalies.union(ruleAnomalies, rawMetricAnomalies);
 
         var recordSerializer = KafkaRecordSerializationSchema.<AnomalyEvent>builder()
                 .setTopic(KafkaTopics.ANOMALY_EVENTS)

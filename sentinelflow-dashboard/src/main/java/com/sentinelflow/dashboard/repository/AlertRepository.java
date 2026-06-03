@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 public interface AlertRepository extends JpaRepository<Alert, String> {
 
@@ -41,4 +42,6 @@ public interface AlertRepository extends JpaRepository<Alert, String> {
 
     @Query("SELECT a FROM Alert a WHERE a.detectedAt >= :since AND a.detectedAt < :until ORDER BY a.detectedAt DESC")
     List<Alert> findByDetectedAtBetween(@Param("since") Instant since, @Param("until") Instant until);
+
+    Optional<Alert> findByAnomalyId(String anomalyId);
 }

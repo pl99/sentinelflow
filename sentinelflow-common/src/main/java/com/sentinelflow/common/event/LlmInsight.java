@@ -8,6 +8,8 @@ import java.util.Map;
 public record LlmInsight(
         String id,
         String anomalyId,
+        String severity,
+        double score,
         String interpretation,
         String incidentClassification,
         List<String> probableCauses,
@@ -18,6 +20,7 @@ public record LlmInsight(
 ) implements Serializable {
     public LlmInsight {
         if (anomalyId == null || anomalyId.isBlank()) throw new IllegalArgumentException("anomalyId must not be blank");
+        if (severity == null) severity = "WARNING";
         if (analyzedAt == null) analyzedAt = Instant.now();
     }
 }

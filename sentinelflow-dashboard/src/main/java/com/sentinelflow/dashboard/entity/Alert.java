@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
 import java.time.Instant;
 
@@ -32,6 +33,7 @@ public class Alert {
     @Column(columnDefinition = "TEXT")
     private String recommendation;
 
+    @Column(unique = true)
     private String anomalyId;
 
     private Instant detectedAt;
