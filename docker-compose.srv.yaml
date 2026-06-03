@@ -107,13 +107,9 @@ services:
     networks:
       - sentinelflow-net
     mem_limit: 128m
-    volumes:
-      - ./sentinelflow-simulator/sample-data:/app/sample-data
     environment:
       JAVA_TOOL_OPTIONS: "-Xmx96m"
       SIMULATOR_INGESTION_URL: http://ingestion:8081/api/v1/ingest
-      TERMO_DATA_PATH: /app/sample-data/termo_data.csv
-      FUEL_DATA_PATH: /app/sample-data/fuel_sensor_data.csv
       SIMULATOR_DELAY_MS: "100"
       SIMULATOR_AUTO_START: "true"
       SIMULATOR_ANOMALY_ENABLED: "true"

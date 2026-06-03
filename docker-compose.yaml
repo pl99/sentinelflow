@@ -40,14 +40,11 @@ services:
         condition: service_healthy
     networks:
       - sentinelflow-net
-    entrypoint: ["/bin/sh", "-c"]
-    command: |
-      kafka-topics --bootstrap-server kafka:9094 --create --if-not-exists --topic raw-events --partitions 3 --replication-factor 1 &&
-      kafka-topics --bootstrap-server kafka:9094 --create --if-not-exists --topic enriched-events --partitions 3 --replication-factor 1 &&
-      kafka-topics --bootstrap-server kafka:9094 --create --if-not-exists --topic anomaly-events --partitions 2 --replication-factor 1 &&
-      kafka-topics --bootstrap-server kafka:9094 --create --if-not-exists --topic llm-insights --partitions 2 --replication-factor 1 &&
-      kafka-topics --bootstrap-server kafka:9094 --create --if-not-exists --topic alerts --partitions 1 --replication-factor 1 &&
-      echo "All topics created"
+    volumes:
+      - ./docker/kafka-init/init-topics.sh:/init-topics.sh
+    environment:
+      KAFKA_BOOTSTRAP_SERVER: kafka:9094
+    entrypoint: ["/bin/sh", "/init-topics.sh"]
 
   postgres:
     image: timescale/timescaledb:latest-pg16

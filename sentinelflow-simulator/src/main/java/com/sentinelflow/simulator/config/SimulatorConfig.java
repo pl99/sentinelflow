@@ -1,7 +1,6 @@
 package com.sentinelflow.simulator.config;
 
 import com.sentinelflow.simulator.service.AnomalyGeneratorService;
-import com.sentinelflow.simulator.service.DataSimulatorService;
 import com.sentinelflow.simulator.service.IngestionClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,12 +16,6 @@ public class SimulatorConfig {
 
     @Value("${simulator.ingestion.url:http://localhost:8081/api/v1/ingest}")
     private String ingestionUrl;
-
-    @Value("${simulator.data.termo-file:}")
-    private String termoFilePath;
-
-    @Value("${simulator.data.fuel-file:}")
-    private String fuelFilePath;
 
     @Value("${simulator.delay-ms:100}")
     private long delayMs;
@@ -45,30 +38,14 @@ public class SimulatorConfig {
     }
 
     @Bean
-    public DataSimulatorService dataSimulatorService(IngestionClient ingestionClient) {
-        return new DataSimulatorService(ingestionClient, termoFilePath, fuelFilePath, delayMs);
-    }
-
-    @Bean
     public AnomalyGeneratorService anomalyGeneratorService(IngestionClient ingestionClient) {
         return new AnomalyGeneratorService(ingestionClient, delayMs);
     }
 
     @Bean
-    public CommandLineRunner simulationRunner(
-            DataSimulatorService simulator,
-            AnomalyGeneratorService anomalyGen) {
+    public CommandLineRunner simulationRunner(AnomalyGeneratorService anomalyGen) {
         return args -> {
             if (autoStart) {
-                log.info("Auto-starting data simulation...");
-                if (termoFilePath != null && !termoFilePath.isBlank()
-                        && fuelFilePath != null && !fuelFilePath.isBlank()) {
-                    int sent = simulator.runSimulation();
-                    log.info("CSV simulation finished: {} events sent", sent);
-                } else {
-                    log.info("No CSV files configured, skipping file-based simulation");
-                }
-
                 if (anomalyEnabled) {
                     log.info("Anomaly generation enabled (cycles={}, continuous={})",
                             anomalyCycles, anomalyContinuous);
@@ -80,11 +57,11 @@ public class SimulatorConfig {
                     } else {
                         log.warn("anomaly.enabled=true but no cycles specified and continuous=false");
                     }
+                } else {
+                    log.info("Auto-start enabled but anomaly generation is disabled. Nothing to run.");
                 }
             } else {
                 log.info("Simulator loaded. Set simulator.auto-start=true to run on startup.");
-                log.info("  termo file: {}", termoFilePath);
-                log.info("  fuel  file: {}", fuelFilePath);
                 log.info("  delay: {}ms", delayMs);
                 log.info("  ingestion URL: {}", ingestionUrl);
                 log.info("  anomaly enabled: {}", anomalyEnabled);
