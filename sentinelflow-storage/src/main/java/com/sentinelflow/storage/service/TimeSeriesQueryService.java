@@ -24,7 +24,7 @@ public class TimeSeriesQueryService {
             String service, String metricName, Instant start, Instant end,
             String bucket, int limit) {
 
-        String bucketInterval = (bucket != null && !bucket.isBlank()) ? bucket : '1' + " minute";
+        String bucketInterval = (bucket != null && !bucket.isBlank()) ? bucket : "1 minute";
 
         var sql = new StringBuilder("""
                 SELECT time_bucket(CAST(:bucket AS interval), mp.time) AS bucket,
