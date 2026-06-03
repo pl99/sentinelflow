@@ -67,6 +67,8 @@ public class AnomalyInterpretationService {
             return new LlmInsight(
                     UUID.randomUUID().toString(),
                     anomaly.id(),
+                    anomaly.severity(),
+                    anomaly.score(),
                     analysis.interpretation() != null ? analysis.interpretation() : "LLM analysis unavailable",
                     analysis.classification() != null ? analysis.classification().trim() : "Unknown",
                     analysis.probableCauses() != null ? analysis.probableCauses() : List.of("Unknown"),
@@ -85,6 +87,8 @@ public class AnomalyInterpretationService {
         return new LlmInsight(
                 UUID.randomUUID().toString(),
                 anomaly.id(),
+                anomaly.severity(),
+                anomaly.score(),
                 "LLM service unavailable",
                 "Unknown",
                 List.of("LLM service unavailable — check Ollama connection"),

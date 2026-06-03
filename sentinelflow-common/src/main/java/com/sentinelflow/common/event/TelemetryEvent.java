@@ -15,8 +15,8 @@ public record TelemetryEvent(
         Map<String, String> tags
 ) implements Serializable {
     public TelemetryEvent {
-        if (source == null) source = "unknown";
-        if (type == null) type = "unknown";
+        if (source == null || source.isBlank()) throw new IllegalArgumentException("source must not be blank");
+        if (type == null || type.isBlank()) throw new IllegalArgumentException("type must not be blank");
         if (timestamp == null) timestamp = Instant.now();
     }
 }
