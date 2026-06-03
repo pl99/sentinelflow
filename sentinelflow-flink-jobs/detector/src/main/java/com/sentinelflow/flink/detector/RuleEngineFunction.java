@@ -24,12 +24,13 @@ public class RuleEngineFunction extends ProcessFunction<TelemetryEvent, AnomalyE
         Object level = event.payload().get("level");
         if (!"ERROR".equals(level) && !"FATAL".equals(level)) return;
 
+        String sev = "ERROR".equals(level) ? "ERROR" : "CRITICAL";
         out.collect(new AnomalyEvent(
                 UUID.randomUUID().toString(),
                 event.source(),
                 "error-rate",
                 1.0,
-                "WARNING",
+                sev,
                 String.format("Error detected: %s", event.payload().get("message")),
                 Instant.now(),
                 Map.of("level", level, "message", event.payload().get("message")),
